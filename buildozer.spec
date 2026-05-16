@@ -5,7 +5,7 @@ package.domain = org.oussama1
 source.dir = .
 source.include_exts = py,png,jpg,kv,atlas,txt,m3u,cfg
 version = 1.0.0
-requirements = python3,kivy==2.3.0,kivymd==1.2.0,plyer
+requirements = python3==3.11.1,kivy==2.3.0,kivymd==1.2.0,plyer
 orientation = portrait
 fullscreen = 0
 android.api = 33
