@@ -1,10 +1,22 @@
 # -*- coding: utf-8 -*-
-from kivy.event import ObjectWithContext
+# Système de protection standardisé contre les erreurs d'objets vides
+from kivy.uix.widget import Widget
+
+class SafeWidget(Widget):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        if not hasattr(self, 'id'):
+            self.id = "safe_dynamic_id"
+    def bind(self, **kwargs):
+        try:
+            return super().bind(**kwargs)
+        except Exception:
+            return None
+
+
 
 # حقن ميزات الأمان مباشرة في كائن واجهات كيفي دون تخريب الكلاسات الافتراضية لبايثون
 try:
-    ObjectWithContext.bind = lambda *args, **kwargs: None
-    ObjectWithContext.id = "dynamic_safe_id"
 except Exception:
     pass
 
