@@ -3,20 +3,20 @@ on: [push, workflow_dispatch]
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout Actions
         uses: actions/checkout@v4
 
-      - name: Setup Python 3.11
+      - name: Setup Python 3.10
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.10'
 
-      - name: Install Buildozer and Dependencies
+      - name: Install Buildozer and Fixed Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libsqlite3-dev lld openjdk-17-jdk shared-mime-info autoconf automake libtool pkg-config zlib1g-dev libffi-dev libssl-dev
+          sudo apt-get install -y libsqlite3-dev lld openjdk-17-jdk shared-mime-info autoconf automake libtool pkg-config zlib1g-dev libffi-dev libssl-dev libltdl-dev expect
           pip install --upgrade pip
           pip install buildozer cython==0.29.36
 
@@ -24,7 +24,6 @@ jobs:
         run: |
           mkdir -p ~/.android
           touch ~/.android/repositories.cfg
-          # الطريقة الرسمية والآمنة لقبول رخص أندرويد سحابياً دون خطأ الـ pipe
           expect -c "
             set timeout -1
             spawn buildozer android licenses
