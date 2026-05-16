@@ -8,21 +8,19 @@ jobs:
       - name: Checkout Actions
         uses: actions/checkout@v4
 
-      - name: Setup Python 3.11
+      - name: Setup Python 3.10
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.10'
 
-      - name: Install Buildozer and Fixed Dependencies
+      - name: Install System Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libsqlite3-dev lld openjdk-17-jdk shared-mime-info autoconf automake libtool pkg-config zlib1g-dev libffi-dev libssl-dev libltdl-dev expect git
+          sudo apt-get install -y libsqlite3-dev lld openjdk-17-jdk shared-mime-info autoconf automake libtool pkg-config zlib1g-dev libffi-dev libssl-dev libltdl-dev expect
           pip install --upgrade pip
           pip install buildozer cython==0.29.36
-          # تثبيت أداة أندرويد لبيثون مسبقاً لضمان عدم فقدان المسار
-          pip install git+https://github.com/kivy/python-for-android.git@master
 
-      - name: Auto-Accept Android SDK Licenses
+      - name: Pre-Accept Licenses
         run: |
           mkdir -p ~/.android
           touch ~/.android/repositories.cfg
@@ -35,8 +33,10 @@ jobs:
             }
           " || true
 
-      - name: Build Android APK with Buildozer
+      - name: Build Android APK
         run: buildozer android debug
+        env:
+          P4A_RELEASE_KEY: ""
 
       - name: Upload Finished APK Artifact
         uses: actions/upload-artifact@v4
