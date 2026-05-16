@@ -8,15 +8,14 @@ jobs:
       - name: Checkout Actions
         uses: actions/checkout@v4
 
-      - name: Setup Python 3.10
+      - name: Setup Python 3.11
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: '3.11'
 
       - name: Install System Dependencies
         run: |
           sudo apt-get update
-          # تثبيت حزم النظام الكاملة لـ SDL2 لضمان عدم فشل الـ pkg-config
           sudo apt-get install -y libsqlite3-dev lld openjdk-17-jdk shared-mime-info autoconf automake libtool pkg-config zlib1g-dev libffi-dev libssl-dev libltdl-dev expect libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev
           pip install --upgrade pip
           pip install buildozer cython==0.29.36
@@ -46,13 +45,14 @@ jobs:
           source.include_exts = py,png,jpg,kv,atlas,txt,m3u,cfg
           version = 1.0.0
           
-          # إضافة المتطلبات الأساسية مع التحديد الصريح لبيئة العمل المستقرة
-          requirements = python3,kivy==2.3.0,kivymd==1.2.0,plyer,pillow
+          # تثبيت صارم لنسخة بايثون المستقرة لمنع سحب إصدار 3.14 التجريبي
+          requirements = python3==3.11.9,kivy==2.3.0,kivymd==1.2.0,plyer,pillow
           
           orientation = portrait
           fullscreen = 0
           android.api = 33
           android.minapi = 24
+          android.ndk = 25c
           android.build_tools_version = 33.0.1
           android.private_storage = True
           android.accept_sdk_license = True
@@ -63,9 +63,9 @@ jobs:
           warn_on_root = 1
           SPEC
 
-      - name: Build Android APK with Clean Paths
+      - name: Build Android APK with Clean Cache
         run: |
-          # تنظيف أي كاش تالف تسبب في توقف الـ SDL2 سابقاً
+          # مسح الكاش بالكامل لمنع استدعاء الملفات العالقة القديمة
           rm -rf ~/.buildozer
           rm -rf .buildozer
           
