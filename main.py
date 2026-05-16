@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from kivymd.app import MDApp
 from kivymd.uix.screen import MDScreen
 from kivymd.uix.button import MDRaisedButton, MDFlatButton
