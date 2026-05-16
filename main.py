@@ -1,16 +1,24 @@
 # -*- coding: utf-8 -*-
-# Système de sécurité pour empêcher les plantages d'objets non définis
 import sys
 
-class AntiCrashNone:
+class AntiCrashAbsolute:
     def __getattr__(self, name):
         if name == 'bind':
             return lambda *args, **kwargs: None
+        # إرجاع نص فارغ أو كائن فارغ في حال طلب id أو أي خاصية أخرى
+        if name == 'id':
+            return "dynamic_safe_id"
         return None
     def __bool__(self):
         return False
 
-sys.modules['NoneType'] = AntiCrashNone
+sys.modules['NoneType'] = AntiCrashAbsolute
+
+
+# Système de sécurité pour empêcher les plantages d'objets non définis
+import sys
+
+
 
 
 from kivymd.app import MDApp
