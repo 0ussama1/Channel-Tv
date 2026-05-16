@@ -16,7 +16,8 @@ jobs:
       - name: Install System Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libsqlite3-dev lld openjdk-17-jdk shared-mime-info autoconf automake libtool pkg-config zlib1g-dev libffi-dev libssl-dev libltdl-dev expect
+          # تثبيت حزم النظام الكاملة لـ SDL2 لضمان عدم فشل الـ pkg-config
+          sudo apt-get install -y libsqlite3-dev lld openjdk-17-jdk shared-mime-info autoconf automake libtool pkg-config zlib1g-dev libffi-dev libssl-dev libltdl-dev expect libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev
           pip install --upgrade pip
           pip install buildozer cython==0.29.36
 
@@ -33,7 +34,7 @@ jobs:
             }
           " || true
 
-      - name: Generate Fresh Buildozer Specification
+      - name: Generate Stable Buildozer Specification
         run: |
           rm -f buildozer.spec
           cat << 'SPEC' > buildozer.spec
@@ -44,7 +45,10 @@ jobs:
           source.dir = .
           source.include_exts = py,png,jpg,kv,atlas,txt,m3u,cfg
           version = 1.0.0
-          requirements = python3,kivy==2.3.0,kivymd==1.2.0,plyer
+          
+          # إضافة المتطلبات الأساسية مع التحديد الصريح لبيئة العمل المستقرة
+          requirements = python3,kivy==2.3.0,kivymd==1.2.0,plyer,pillow
+          
           orientation = portrait
           fullscreen = 0
           android.api = 33
@@ -59,15 +63,13 @@ jobs:
           warn_on_root = 1
           SPEC
 
-      - name: Build Android APK with Absolute Paths
+      - name: Build Android APK with Clean Paths
         run: |
-          # تنظيف شامل وحذف أي كاش قديم مكسور للمسارات
+          # تنظيف أي كاش تالف تسبب في توقف الـ SDL2 سابقاً
           rm -rf ~/.buildozer
           rm -rf .buildozer
           
-          # فرض المسار المطلق الصحيح لتفادي خطأ المسار النسبي المفقود
-          export BUILDOZER_HOME="/home/runner/work/channel-tv/channel-tv/.buildozer"
-          
+          export BUILDOZER_HOME="/home/runner/work/Channel-Tv/Channel-Tv/.buildozer"
           buildozer android debug
           
       - name: Upload Finished APK Artifact
