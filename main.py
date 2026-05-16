@@ -11,7 +11,6 @@ class SatChannelEditorPro(MDApp):
         self.theme_cls.theme_style = "Dark"
         self.theme_cls.primary_palette = "Blue"
         
-        # إنشاء مدير الشاشات وإرجاع شاشة رئيسية فارغة وآمنة للفحص
         sm = ScreenManager()
         sm.add_widget(MainScreen(name='main'))
         return sm
