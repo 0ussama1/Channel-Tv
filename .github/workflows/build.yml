@@ -8,6 +8,15 @@ jobs:
       - name: Checkout Actions
         uses: actions/checkout@v4
 
+      - name: Free Disk Space (طبقة تنظيف مساحة السيرفر)
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /opt/ghc
+          sudo rm -rf "/usr/local/share/boost"
+          sudo apt-get clean
+          df -h
+
       - name: Install System Dependencies
         run: |
           sudo apt-get update
@@ -44,7 +53,11 @@ jobs:
           fullscreen = 0
           android.api = 33
           android.minapi = 24
+          
+          # تثبيت إصدار الـ NDK المستقر لحماية المترجم من الانهيار
+          android.ndk = 25c
           android.build_tools_version = 33.0.1
+          
           android.private_storage = True
           android.accept_sdk_license = True
           android.permissions = READ_EXTERNAL_STORAGE,WRITE_EXTERNAL_STORAGE
