@@ -28,7 +28,7 @@ jobs:
             }
           " || true
 
-      - name: Generate Fresh Buildozer Specification
+      - name: Generate Base Buildozer Specification
         run: |
           rm -f buildozer.spec
           cat << 'SPEC' > buildozer.spec
@@ -39,10 +39,7 @@ jobs:
           source.dir = .
           source.include_exts = py,png,jpg,kv,atlas,txt,m3u,cfg
           version = 1.0.0
-          
-          # ترك المتطلبات افتراضية مستقرة لتفادي مشاكل تضارب المترجم تماماً
           requirements = python3,kivy==2.3.0,kivymd==1.2.0,plyer
-          
           orientation = portrait
           fullscreen = 0
           android.api = 33
@@ -57,16 +54,14 @@ jobs:
           warn_on_root = 1
           SPEC
 
-      - name: Build Android APK
+      - name: Run Buildozer Base Layer
         run: |
-          # تنظيف جذري وصارم لضمان عدم بقاء أي ملف مكسور في الذاكرة
           rm -rf ~/.buildozer
           rm -rf .buildozer
-          
           export BUILDOZER_HOME="/home/runner/work/Channel-Tv/Channel-Tv/.buildozer"
           buildozer android debug
           
-      - name: Upload Finished APK Artifact
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: SatChannelEditor-Pro-APK
