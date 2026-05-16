@@ -1,18 +1,18 @@
 # -*- coding: utf-8 -*-
+from kivy.event import ObjectWithContext
+
+# حقن ميزات الأمان مباشرة في كائن واجهات كيفي دون تخريب الكلاسات الافتراضية لبايثون
+try:
+    ObjectWithContext.bind = lambda *args, **kwargs: None
+    ObjectWithContext.id = "dynamic_safe_id"
+except Exception:
+    pass
+
+
 import sys
 
-class AntiCrashAbsolute:
-    def __getattr__(self, name):
-        if name == 'bind':
-            return lambda *args, **kwargs: None
         # إرجاع نص فارغ أو كائن فارغ في حال طلب id أو أي خاصية أخرى
-        if name == 'id':
-            return "dynamic_safe_id"
-        return None
-    def __bool__(self):
-        return False
 
-sys.modules['NoneType'] = AntiCrashAbsolute
 
 
 # Système de sécurité pour empêcher les plantages d'objets non définis
