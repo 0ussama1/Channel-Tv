@@ -1,0 +1,41 @@
+name: Build Android APK
+on: [push, workflow_dispatch]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Actions
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Buildozer and Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libsqlite3-dev lldd lld openjdk-17-jdk shared-mime-info
+          pip install --upgrade pip
+          pip install buildozer cython git+https://github.com/kivy/kivy.git@master
+
+      - name: Initialize Buildozer Specification
+        run: |
+          buildozer init
+          # تعديل إعدادات التسمية والمكتبات أوتوماتيكياً لتتوافق مع المشروع
+          sed -i 's/title = My Application/title = Sat Channel Editor Pro/g' buildozer.spec
+          sed -i 's/package.name = myapp/package.name = satchanneleditor/g' buildozer.spec
+          sed -i 's/package.domain = org.test/package.domain = org.oussama1/g' buildozer.spec
+          sed -i 's/requirements = python3,kivy/requirements = python3,kivy==master,kivymd==master,plyer/g' buildozer.spec
+          sed -i 's/#android.permissions =/android.permissions = READ_EXTERNAL_STORAGE,WRITE_EXTERNAL_STORAGE/g' buildozer.spec
+          sed -i 's/#android.accept_sdk_license = False/android.accept_sdk_license = True/g' buildozer.spec
+
+      - name: Build Android APK with Buildozer
+        run: buildozer android debug
+
+      - name: Upload Finished APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SatChannelEditor-Pro-APK
+          path: bin/*.apk
