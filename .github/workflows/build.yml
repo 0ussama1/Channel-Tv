@@ -20,30 +20,22 @@ jobs:
           pip install --upgrade pip
           pip install buildozer cython==0.29.36
 
-      - name: Pre-accept Android SDK Licenses
+      - name: Auto-Accept Android SDK Licenses
         run: |
           mkdir -p ~/.android
           touch ~/.android/repositories.cfg
-          # استخدام سكريبت لإجبار النظام على قبول رخص جوجل والـ SDK المسبقة
-          yes | buildozer android licenses || true
-
-      - name: Initialize Buildozer Specification
-        run: |
-          buildozer init
-          # ضبط الإعدادات وإجبار الأدوات على استخدام إصدار مستقر وآمن (API 33 و Build Tools 33)
-          sed -i 's/title = My Application/title = Sat Channel Editor Pro/g' buildozer.spec
-          sed -i 's/package.name = myapp/package.name = satchanneleditor/g' buildozer.spec
-          sed -i 's/package.domain = org.test/package.domain = org.oussama1/g' buildozer.spec
-          sed -i 's/requirements = python3,kivy/requirements = python3,kivy==2.3.0,kivymd==1.2.0,plyer/g' buildozer.spec
-          sed -i 's/#android.permissions =/android.permissions = READ_EXTERNAL_STORAGE,WRITE_EXTERNAL_STORAGE/g' buildozer.spec
-          sed -i 's/#android.accept_sdk_license = False/android.accept_sdk_license = True/g' buildozer.spec
-          sed -i 's/#android.api = 33/android.api = 33/g' buildozer.spec
-          sed -i 's/#android.build_tools_version =/android.build_tools_version = 33.0.1/g' buildozer.spec
+          # الطريقة الرسمية والآمنة لقبول رخص أندرويد سحابياً دون خطأ الـ pipe
+          expect -c "
+            set timeout -1
+            spawn buildozer android licenses
+            expect {
+              \"*Accept?*\" { send \"y\r\"; exp_continue }
+              eof
+            }
+          " || true
 
       - name: Build Android APK with Buildozer
-        run: |
-          # تمرير أمر الموافقة المسبقة أوتوماتيكياً أثناء التجميع
-          yes | buildozer android debug
+        run: buildozer android debug
 
       - name: Upload Finished APK Artifact
         uses: actions/upload-artifact@v4
