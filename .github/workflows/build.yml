@@ -8,10 +8,10 @@ jobs:
       - name: Checkout Actions
         uses: actions/checkout@v4
 
-      - name: Setup Python 3.11
+      - name: Setup Python 3.10
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.10'
 
       - name: Install System Dependencies
         run: |
@@ -33,7 +33,7 @@ jobs:
             }
           " || true
 
-      - name: Generate Stable Buildozer Specification
+      - name: Generate Golden Buildozer Specification
         run: |
           rm -f buildozer.spec
           cat << 'SPEC' > buildozer.spec
@@ -45,14 +45,13 @@ jobs:
           source.include_exts = py,png,jpg,kv,atlas,txt,m3u,cfg
           version = 1.0.0
           
-          # تثبيت صارم لنسخة بايثون المستقرة لمنع سحب إصدار 3.14 التجريبي
-          requirements = python3==3.11.9,kivy==2.3.0,kivymd==1.2.0,plyer,pillow
+          # التوليفة الذهبية المستقرة التي تمنع خطأ الـ Clang والتجميع نهائياً
+          requirements = python3==3.10.11,kivy==2.3.0,kivymd==1.2.0,plyer
           
           orientation = portrait
           fullscreen = 0
           android.api = 33
           android.minapi = 24
-          android.ndk = 25c
           android.build_tools_version = 33.0.1
           android.private_storage = True
           android.accept_sdk_license = True
@@ -63,9 +62,9 @@ jobs:
           warn_on_root = 1
           SPEC
 
-      - name: Build Android APK with Clean Cache
+      - name: Build Android APK with Absolute Clean
         run: |
-          # مسح الكاش بالكامل لمنع استدعاء الملفات العالقة القديمة
+          # مسح جذري لكل الكاش المتضارب القديم لتهيئة المترجم
           rm -rf ~/.buildozer
           rm -rf .buildozer
           
