@@ -71,16 +71,23 @@ jobs:
           warn_on_root = 1
           SPEC
 
-      - name: Production Build with Fixed Downloader
+      - name: Absolute Workspace Build Execution
         run: |
+          # تطهير جذري للمسارات الافتراضية المقيدة للمستخدم العادي
           rm -rf ~/.buildozer
           rm -rf .buildozer
+          mkdir -p .buildozer/android/platform
           
-          # إخماد وتخطي تضارب موجهات الصلاحيات والتفاعل بالكامل لملفات الكومبايلر
+          # فرض متغيرات بيئة مطلقة ومستقرة تجبر التجميع محلياً بالكامل
+          export BUILDOZER_HOME="${GITHUB_WORKSPACE}/.buildozer"
+          export BUILDOZER_BIN="${GITHUB_WORKSPACE}/bin"
+          export P4A_HOME="${GITHUB_WORKSPACE}/.buildozer/android/platform/python-for-android"
+          
+          # تفعيل وضع عدم التفاعل الصارم لمنع انهيار الـ TTY
           export NONINTERACTIVE=1
           export STTY_CLEAN=1
           
-          # تشغيل أمر البناء النهائي والمستقر
+          # تشغيل أمر البناء النهائي مع حظر أي تداخل للصلاحيات
           buildozer android debug
           
       - name: Upload Finished APK Artifact
