@@ -36,7 +36,7 @@ jobs:
             }
           " || true
 
-      - name: Generate Dynamic Buildozer Specification
+      - name: Generate Focused Architecture Specification
         run: |
           rm -f buildozer.spec
           cat << 'SPEC' > buildozer.spec
@@ -48,7 +48,7 @@ jobs:
           source.include_exts = py,png,jpg,kv,atlas,txt,m3u,cfg
           version = 1.0.0
           
-          # ترك المتطلبات الافتراضية المرنة لتعبر الفحص بسلاسة
+          # المتطلبات الأساسية
           requirements = python3,kivy==2.3.0,kivymd==1.2.0,plyer
           
           orientation = portrait
@@ -56,6 +56,10 @@ jobs:
           android.api = 33
           android.minapi = 24
           android.build_tools_version = 33.0.1
+          
+          # حصر البناء في معمارية الـ 64 بت الحديثة لتخطي كراش المترجم تماماً
+          android.archs = arm64-v8a
+          
           android.private_storage = True
           android.accept_sdk_license = True
           android.permissions = READ_EXTERNAL_STORAGE,WRITE_EXTERNAL_STORAGE
