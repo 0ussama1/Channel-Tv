@@ -1,44 +1,18 @@
-name: Build Android APK
+name: Build Android APK via Docker
 on: [push, workflow_dispatch]
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
+    # استخدام حاوية Docker مجهزة ومستقرة لحل مشاكل المترجم تماماً
+    container:
+      image: docker://bakinganytime/buildozer:latest
+    
     steps:
-      - name: Checkout Actions
+      - name: Checkout Source Code
         uses: actions/checkout@v4
 
-      - name: Free Disk Space
-        run: |
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf /usr/local/lib/android
-          sudo rm -rf /opt/ghc
-          sudo rm -rf "/usr/local/share/boost"
-          sudo apt-get clean
-
-      - name: Install System Dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libsqlite3-dev lld openjdk-17-jdk shared-mime-info autoconf automake libtool pkg-config zlib1g-dev libffi-dev libssl-dev libltdl-dev expect libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev
-          pip install --upgrade pip
-          # تثبيت النسخة الرسمية الحديثة والمستقرة تماماً من buildozer لمنع استدعاء distribute.sh القديم
-          pip install buildozer
-          pip install "cython>=0.29.38,<3.0.0"
-
-      - name: Pre-Accept Android SDK Licenses
-        run: |
-          mkdir -p ~/.android
-          touch ~/.android/repositories.cfg
-          expect -c "
-            set timeout -1
-            spawn buildozer android licenses
-            expect {
-              \"*Accept?*\" { send \"y\r\"; exp_continue }
-              eof
-            }
-          " || true
-
-      - name: Generate Stabilized Specification
+      - name: Generate Fresh Specification
         run: |
           rm -f buildozer.spec
           cat << 'SPEC' > buildozer.spec
@@ -50,7 +24,7 @@ jobs:
           source.include_exts = py,png,jpg,kv,atlas,txt,m3u,cfg
           version = 1.0.0
           
-          # المتطلبات القياسية الذهبية المستقرة
+          # المتطلبات الافتراضية الآمنة داخل الحاوية
           requirements = python3,kivy==2.3.0,kivymd==1.2.0,plyer
           
           orientation = portrait
@@ -68,17 +42,12 @@ jobs:
           warn_on_root = 1
           SPEC
 
-      - name: Clear GitHub Actions Cache and Build
-        # إجبار السيرفر على تدمير مجلدات الكاش تماماً قبل البدء لضمان عدم سحب السكريبت المكسور
+      - name: Build Android APK inside Container
         run: |
-          rm -rf ~/.buildozer
-          rm -rf .buildozer
-          rm -rf ~/.local/share/python-for-android
-          
-          export BUILDOZER_HOME="/home/runner/work/Channel-Tv/Channel-Tv/.buildozer"
+          # البناء مباشرة مستفيداً من أدوات الحاوية المعزولة
           buildozer android debug
-          
-      - name: Upload APK
+
+      - name: Upload Finished APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: SatChannelEditor-Pro-APK
