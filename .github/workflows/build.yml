@@ -21,7 +21,9 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libsqlite3-dev lld openjdk-17-jdk shared-mime-info autoconf automake libtool pkg-config zlib1g-dev libffi-dev libssl-dev libltdl-dev expect libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev
           pip install --upgrade pip
-          pip install buildozer cython
+          pip install buildozer
+          # ترك إصدار الكابوس القديم وتثبيت النسخة الحديثة المتوافقة جينياً مع بايثون 3.11
+          pip install "cython>=3.0.0"
 
       - name: Pre-Accept Android SDK Licenses
         run: |
@@ -36,7 +38,7 @@ jobs:
             }
           " || true
 
-      - name: Generate Fixed Buildozer Specification
+      - name: Generate Fresh Target Specification
         run: |
           rm -f buildozer.spec
           cat << 'SPEC' > buildozer.spec
@@ -48,7 +50,7 @@ jobs:
           source.include_exts = py,png,jpg,kv,atlas,txt,m3u,cfg
           version = 1.0.0
           
-          # استخدام توليفة مستقرة حديثاً تمنع كراش المترجم تماماً
+          # التوليفة الذهبية المتوافقة بالكامل مع السيرفرات الحديثة لـ Ubuntu
           requirements = python3==3.11.9,kivy==2.3.0,kivymd==1.2.0,plyer,pillow
           
           orientation = portrait
@@ -66,10 +68,13 @@ jobs:
           warn_on_root = 1
           SPEC
 
-      - name: Run Native Buildozer Build
+      - name: Force Pure Clean Build
         run: |
+          # نسف جذري وشامل لكافة مخلفات البناء القديمة والعالقة في كاش السيرفر
           rm -rf ~/.buildozer
           rm -rf .buildozer
+          rm -rf ~/.local/share/python-for-android
+          
           export BUILDOZER_HOME="/home/runner/work/Channel-Tv/Channel-Tv/.buildozer"
           buildozer android debug
           
