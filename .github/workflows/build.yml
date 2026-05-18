@@ -36,7 +36,7 @@ jobs:
             }
           " || true
 
-      - name: Generate Focused Architecture Specification
+      - name: Generate Stabilized Architecture Specification
         run: |
           rm -f buildozer.spec
           cat << 'SPEC' > buildozer.spec
@@ -48,8 +48,8 @@ jobs:
           source.include_exts = py,png,jpg,kv,atlas,txt,m3u,cfg
           version = 1.0.0
           
-          # المتطلبات الأساسية
-          requirements = python3,kivy==2.3.0,kivymd==1.2.0,plyer
+          # تثبيت النسخة الأكثر استقراراً للتخلص من خطأ target_python
+          requirements = python3==3.10.11,kivy==2.3.0,kivymd==1.2.0,plyer
           
           orientation = portrait
           fullscreen = 0
@@ -57,7 +57,7 @@ jobs:
           android.minapi = 24
           android.build_tools_version = 33.0.1
           
-          # حصر البناء في معمارية الـ 64 بت الحديثة لتخطي كراش المترجم تماماً
+          # الحفاظ على معمارية الـ 64 بت التي نجحت في تخطي كراش Pillow
           android.archs = arm64-v8a
           
           android.private_storage = True
@@ -69,7 +69,7 @@ jobs:
           warn_on_root = 1
           SPEC
 
-      - name: Run Buildozer Base Layer
+      - name: Run Buildozer Final Layer
         run: |
           rm -rf ~/.buildozer
           rm -rf .buildozer
