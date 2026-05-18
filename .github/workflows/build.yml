@@ -16,7 +16,6 @@ jobs:
           sudo rm -rf "/usr/local/share/boost"
           sudo apt-get clean
 
-      # الخطوة الجوهرية: توحيد إصدار بايثون الـ Host على السيرفر لتطابق الـ Android تماماً
       - name: Setup Unified Python Environment
         uses: actions/setup-python@v5
         with:
@@ -27,8 +26,9 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libsqlite3-dev lld openjdk-17-jdk shared-mime-info autoconf automake libtool pkg-config zlib1g-dev libffi-dev libssl-dev libltdl-dev expect libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev
           python -m pip install --upgrade pip
+          # تثبيت الإصدار الذهبي الدقيق المطلوب لإنهاء عناد السيرفر
+          pip install "cython==0.29.33"
           pip install buildozer
-          pip install "cython>=0.29.38,<3.0.0"
 
       - name: Pre-Accept Android SDK Licenses
         run: |
@@ -55,7 +55,6 @@ jobs:
           source.include_exts = py,png,jpg,kv,atlas,txt,m3u,cfg
           version = 1.0.1
           
-          # توحيد المتطلبات مع نسخة الـ Host تماماً لمنع الكراش
           requirements = python3==3.11.9,kivy==2.3.0,kivymd==1.2.0,plyer,pillow
           
           orientation = portrait
