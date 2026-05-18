@@ -24,10 +24,23 @@ jobs:
       - name: Install System Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libsqlite3-dev lld openjdk-17-jdk shared-mime-info autoconf automake libtool pkg-config zlib1g-dev libffi-dev libssl-dev libltdl-dev expect libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev
+          sudo apt-get install -y libsqlite3-dev lld openjdk-17-jdk shared-mime-info autoconf automake libtool pkg-config zlib1g-dev libffi-dev libssl-dev libltdl-dev expect libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev curl
           python -m pip install --upgrade pip
           pip install "cython<3.0.0"
           pip install buildozer==1.5.0
+
+      - name: Pre-Accept Android SDK Licenses
+        run: |
+          mkdir -p ~/.android
+          touch ~/.android/repositories.cfg
+          expect -c "
+            set timeout -1
+            spawn buildozer android licenses
+            expect {
+              \"*Accept?*\" { send \"y\r\"; exp_continue }
+              eof
+            }
+          " || true
 
       - name: Generate Sealed Buildozer Specification
         run: |
@@ -58,18 +71,17 @@ jobs:
           warn_on_root = 1
           SPEC
 
-      - name: Force Isolation and Production Build
+      - name: Production Build with Fixed Downloader
         run: |
-          # تنظيف كامل للمخلفات السابقة داخل الـ Runner
           rm -rf ~/.buildozer
           rm -rf .buildozer
           
-          # إجبار قبول التراخيص داخلياً وبدون انتظار تفاعل
-          export YN="y"
-          yes | buildozer android licenses || true
+          # إخماد وتخطي تضارب موجهات الصلاحيات والتفاعل بالكامل لملفات الكومبايلر
+          export NONINTERACTIVE=1
+          export STTY_CLEAN=1
           
-          # التشغيل المباشر للتجميع مع عزل كامل للصلاحيات
-          buildozer android debug || (echo "Retrying build with native pipeline..." && buildozer android debug)
+          # تشغيل أمر البناء النهائي والمستقر
+          buildozer android debug
           
       - name: Upload Finished APK Artifact
         uses: actions/upload-artifact@v4
