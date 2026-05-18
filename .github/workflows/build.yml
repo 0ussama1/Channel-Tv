@@ -8,14 +8,13 @@ jobs:
       - name: Checkout Actions
         uses: actions/checkout@v4
 
-      - name: Free Disk Space (طبقة تنظيف مساحة السيرفر)
+      - name: Free Disk Space
         run: |
           sudo rm -rf /usr/share/dotnet
           sudo rm -rf /usr/local/lib/android
           sudo rm -rf /opt/ghc
           sudo rm -rf "/usr/local/share/boost"
           sudo apt-get clean
-          df -h
 
       - name: Install System Dependencies
         run: |
@@ -37,7 +36,7 @@ jobs:
             }
           " || true
 
-      - name: Generate Base Buildozer Specification
+      - name: Generate Dynamic Buildozer Specification
         run: |
           rm -f buildozer.spec
           cat << 'SPEC' > buildozer.spec
@@ -48,16 +47,15 @@ jobs:
           source.dir = .
           source.include_exts = py,png,jpg,kv,atlas,txt,m3u,cfg
           version = 1.0.0
+          
+          # ترك المتطلبات الافتراضية المرنة لتعبر الفحص بسلاسة
           requirements = python3,kivy==2.3.0,kivymd==1.2.0,plyer
+          
           orientation = portrait
           fullscreen = 0
           android.api = 33
           android.minapi = 24
-          
-          # تثبيت إصدار الـ NDK المستقر لحماية المترجم من الانهيار
-          android.ndk = 25c
           android.build_tools_version = 33.0.1
-          
           android.private_storage = True
           android.accept_sdk_license = True
           android.permissions = READ_EXTERNAL_STORAGE,WRITE_EXTERNAL_STORAGE
