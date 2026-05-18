@@ -8,15 +8,6 @@ jobs:
       - name: Checkout Source Code
         uses: actions/checkout@v4
 
-      - name: Purge Pre-Installed Android Toolchains
-        run: |
-          # تنظيف المساحة وإزالة الـ SDK المشوش للنظام تماماً
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf /usr/local/lib/android
-          sudo rm -rf /opt/ghc
-          sudo rm -rf "/usr/local/share/boost"
-          sudo apt-get clean
-
       - name: Setup Unified Python Environment
         uses: actions/setup-python@v5
         with:
@@ -29,6 +20,20 @@ jobs:
           python -m pip install --upgrade pip
           pip install "cython<3.0.0"
           pip install buildozer==1.5.0
+
+      - name: Overwrite System Android Variables
+        run: |
+          # إنشاء وتأمين مجلد محلي معزول تماماً للـ Toolchain
+          mkdir -p ${{ github.workspace }}/.buildozer_global/android/platform
+          
+          # حقن متغيرات البيئة إجبارياً في النظام السحابي لتخطي القيم الافتراضية
+          echo "BUILDOZER_HOME=${{ github.workspace }}/.buildozer_global" >> $GITHUB_ENV
+          echo "ANDROID_HOME=${{ github.workspace }}/.buildozer_global/android/platform/android-sdk" >> $GITHUB_ENV
+          echo "ANDROID_SDK_ROOT=${{ github.workspace }}/.buildozer_global/android/platform/android-sdk" >> $GITHUB_ENV
+          echo "ANDROID_NDK_HOME=${{ github.workspace }}/.buildozer_global/android/platform/android-ndk-r25b" >> $GITHUB_ENV
+          echo "P4A_HOME=${{ github.workspace }}/.buildozer_global/android/platform/python-for-android" >> $GITHUB_ENV
+          echo "NONINTERACTIVE=1" >> $GITHUB_ENV
+          echo "STTY_CLEAN=1" >> $GITHUB_ENV
 
       - name: Generate Synced Buildozer Specification
         run: |
@@ -59,30 +64,14 @@ jobs:
           warn_on_root = 1
           SPEC
 
-      - name: Absolute Production Native Build
+      - name: Forced Local Context Production Build
         run: |
-          # محو كامل للمجلدات الافتراضية
-          rm -rf ~/.buildozer
-          rm -rf .buildozer
-          mkdir -p .buildozer/android/platform
-          
-          # فرض العزل الكامل داخل مجلد المشروع
-          export BUILDOZER_HOME="${GITHUB_WORKSPACE}/.buildozer"
-          export BUILDOZER_BIN="${GITHUB_WORKSPACE}/bin"
-          export P4A_HOME="${GITHUB_WORKSPACE}/.buildozer/android/platform/python-for-android"
-          
-          # حظر التداخل وتعطيل موجهات الـ TTY التفاعلية
-          export NONINTERACTIVE=1
-          export STTY_CLEAN=1
-          export ANDROID_HOME=""
-          export ANDROID_SDK_ROOT=""
-          
-          # قبول التراخيص بشكل مسبق ومستقل داخل البيئة المعزولة
+          # قبول التراخيص بشكل مسبق داخل المسار المحلي الجديد للـ SDK
           yes | buildozer android licenses || true
           
-          # إطلاق التجميع القطعي والنهائي لملف الـ APK
+          # إطلاق التجميع الآمن والمعزول كلياً
           buildozer android debug
-          
+
       - name: Upload Finished APK Artifact
         uses: actions/upload-artifact@v4
         with:
