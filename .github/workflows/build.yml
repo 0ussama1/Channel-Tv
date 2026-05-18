@@ -22,7 +22,6 @@ jobs:
           sudo apt-get install -y libsqlite3-dev lld openjdk-17-jdk shared-mime-info autoconf automake libtool pkg-config zlib1g-dev libffi-dev libssl-dev libltdl-dev expect libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev
           pip install --upgrade pip
           pip install buildozer
-          # ترك إصدار الكابوس القديم وتثبيت النسخة الحديثة المتوافقة جينياً مع بايثون 3.11
           pip install "cython>=3.0.0"
 
       - name: Pre-Accept Android SDK Licenses
@@ -38,19 +37,19 @@ jobs:
             }
           " || true
 
-      - name: Generate Fresh Target Specification
+      - name: Generate Forced New Specification
         run: |
           rm -f buildozer.spec
           cat << 'SPEC' > buildozer.spec
           [app]
           title = Sat Channel Editor Pro
-          package.name = satchanneleditor
-          package.domain = org.oussama1
+          # تغيير اسم الحزمة والـ Domain لكسر أي كاش سحابي مكسور مجبراً
+          package.name = satchannelpro
+          package.domain = org.oussama.sat
           source.dir = .
           source.include_exts = py,png,jpg,kv,atlas,txt,m3u,cfg
-          version = 1.0.0
+          version = 1.0.1
           
-          # التوليفة الذهبية المتوافقة بالكامل مع السيرفرات الحديثة لـ Ubuntu
           requirements = python3==3.11.9,kivy==2.3.0,kivymd==1.2.0,plyer,pillow
           
           orientation = portrait
@@ -68,14 +67,12 @@ jobs:
           warn_on_root = 1
           SPEC
 
-      - name: Force Pure Clean Build
+      - name: Build with Dynamic Paths
         run: |
-          # نسف جذري وشامل لكافة مخلفات البناء القديمة والعالقة في كاش السيرفر
-          rm -rf ~/.buildozer
-          rm -rf .buildozer
-          rm -rf ~/.local/share/python-for-android
-          
-          export BUILDOZER_HOME="/home/runner/work/Channel-Tv/Channel-Tv/.buildozer"
+          # إنشاء مسارات بناء عشوائية وجديدة تماماً لضمان عدم تداخل الكاش القديم
+          NEW_HOME="${HOME}/build_clean_$(date +%s)"
+          mkdir -p "$NEW_HOME"
+          export BUILDOZER_HOME="$NEW_HOME"
           buildozer android debug
           
       - name: Upload Finished APK Artifact
