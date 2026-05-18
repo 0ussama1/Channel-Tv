@@ -26,9 +26,9 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libsqlite3-dev lld openjdk-17-jdk shared-mime-info autoconf automake libtool pkg-config zlib1g-dev libffi-dev libssl-dev libltdl-dev expect libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev
           python -m pip install --upgrade pip
-          # تثبيت الإصدار الذهبي الدقيق المطلوب لإنهاء عناد السيرفر
-          pip install "cython==0.29.33"
-          pip install buildozer
+          pip install "cython<3.0.0"
+          # استخدام نسخة مستقرة ومحددة جينياً لتجنب كراش التهيئة
+          pip install buildozer==1.5.0
 
       - name: Pre-Accept Android SDK Licenses
         run: |
@@ -72,11 +72,10 @@ jobs:
           warn_on_root = 1
           SPEC
 
-      - name: Clean Native Build
+      - name: Execution of Buildozer Command
         run: |
           rm -rf ~/.buildozer
           rm -rf .buildozer
-          export BUILDOZER_HOME="/home/runner/work/Channel-Tv/Channel-Tv/.buildozer"
           buildozer android debug
           
       - name: Upload Finished APK Artifact
