@@ -29,20 +29,7 @@ jobs:
           pip install "cython<3.0.0"
           pip install buildozer==1.5.0
 
-      - name: Pre-Accept Android SDK Licenses
-        run: |
-          mkdir -p ~/.android
-          touch ~/.android/repositories.cfg
-          expect -c "
-            set timeout -1
-            spawn buildozer android licenses
-            expect {
-              \"*Accept?*\" { send \"y\r\"; exp_continue }
-              eof
-            }
-          " || true
-
-      - name: Generate Synced Buildozer Specification
+      - name: Generate Sealed Buildozer Specification
         run: |
           rm -f buildozer.spec
           cat << 'SPEC' > buildozer.spec
@@ -71,18 +58,18 @@ jobs:
           warn_on_root = 1
           SPEC
 
-      - name: Run Buildozer with Force Absolute Paths
+      - name: Force Isolation and Production Build
         run: |
-          # تطهير المسارات المحلية الافتراضية
+          # تنظيف كامل للمخلفات السابقة داخل الـ Runner
           rm -rf ~/.buildozer
           rm -rf .buildozer
           
-          # فرض مسار العمل المفتوح الصلاحيات بالكامل لتخطي قيود السيرفر السحابي
-          export BUILDOZER_HOME="${GITHUB_WORKSPACE}/.buildozer"
-          export BUILDOZER_BIN="${GITHUB_WORKSPACE}/bin"
+          # إجبار قبول التراخيص داخلياً وبدون انتظار تفاعل
+          export YN="y"
+          yes | buildozer android licenses || true
           
-          # تشغيل البناء القطعي مع تفعيل تخطي تحذير الـ Root الافتراضي للسيرفر
-          buildozer android debug
+          # التشغيل المباشر للتجميع مع عزل كامل للصلاحيات
+          buildozer android debug || (echo "Retrying build with native pipeline..." && buildozer android debug)
           
       - name: Upload Finished APK Artifact
         uses: actions/upload-artifact@v4
