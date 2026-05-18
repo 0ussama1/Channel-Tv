@@ -21,7 +21,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libsqlite3-dev lld openjdk-17-jdk shared-mime-info autoconf automake libtool pkg-config zlib1g-dev libffi-dev libssl-dev libltdl-dev expect libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev
           pip install --upgrade pip
-          pip install buildozer cython==0.29.36
+          # ترقية Cython لنسخة متوافقة تماماً مع معمارية المترجم الحديثة لبايثون 3.10
+          pip install buildozer "cython>=0.29.38,<3.0.0"
 
       - name: Pre-Accept Android SDK Licenses
         run: |
@@ -36,7 +37,7 @@ jobs:
             }
           " || true
 
-      - name: Generate Stabilized Architecture Specification
+      - name: Generate Stabilized Specification
         run: |
           rm -f buildozer.spec
           cat << 'SPEC' > buildozer.spec
@@ -48,7 +49,7 @@ jobs:
           source.include_exts = py,png,jpg,kv,atlas,txt,m3u,cfg
           version = 1.0.0
           
-          # تثبيت النسخة الأكثر استقراراً للتخلص من خطأ target_python
+          # تثبيت الحزم المتوافقة جينياً مع معمارية الـ 64 بت لحل خطأ المترجم
           requirements = python3==3.10.11,kivy==2.3.0,kivymd==1.2.0,plyer
           
           orientation = portrait
@@ -57,7 +58,7 @@ jobs:
           android.minapi = 24
           android.build_tools_version = 33.0.1
           
-          # الحفاظ على معمارية الـ 64 بت التي نجحت في تخطي كراش Pillow
+          # الحفاظ على المعمارية الموحدة لسرعة التجميع وتخطي كراش الصور
           android.archs = arm64-v8a
           
           android.private_storage = True
@@ -69,8 +70,9 @@ jobs:
           warn_on_root = 1
           SPEC
 
-      - name: Run Buildozer Final Layer
+      - name: Run Buildozer Absolute Clean Build
         run: |
+          # تنظيف كامل للتخلص من رواسب Cython القديمة المتعارضة
           rm -rf ~/.buildozer
           rm -rf .buildozer
           export BUILDOZER_HOME="/home/runner/work/Channel-Tv/Channel-Tv/.buildozer"
