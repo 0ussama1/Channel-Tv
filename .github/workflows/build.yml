@@ -8,8 +8,9 @@ jobs:
       - name: Checkout Source Code
         uses: actions/checkout@v4
 
-      - name: Free Disk Space
+      - name: Purge Pre-Installed Android Toolchains
         run: |
+          # تنظيف المساحة وإزالة الـ SDK المشوش للنظام تماماً
           sudo rm -rf /usr/share/dotnet
           sudo rm -rf /usr/local/lib/android
           sudo rm -rf /opt/ghc
@@ -29,20 +30,7 @@ jobs:
           pip install "cython<3.0.0"
           pip install buildozer==1.5.0
 
-      - name: Pre-Accept Android SDK Licenses
-        run: |
-          mkdir -p ~/.android
-          touch ~/.android/repositories.cfg
-          expect -c "
-            set timeout -1
-            spawn buildozer android licenses
-            expect {
-              \"*Accept?*\" { send \"y\r\"; exp_continue }
-              eof
-            }
-          " || true
-
-      - name: Generate Sealed Buildozer Specification
+      - name: Generate Synced Buildozer Specification
         run: |
           rm -f buildozer.spec
           cat << 'SPEC' > buildozer.spec
@@ -71,23 +59,28 @@ jobs:
           warn_on_root = 1
           SPEC
 
-      - name: Absolute Workspace Build Execution
+      - name: Absolute Production Native Build
         run: |
-          # تطهير جذري للمسارات الافتراضية المقيدة للمستخدم العادي
+          # محو كامل للمجلدات الافتراضية
           rm -rf ~/.buildozer
           rm -rf .buildozer
           mkdir -p .buildozer/android/platform
           
-          # فرض متغيرات بيئة مطلقة ومستقرة تجبر التجميع محلياً بالكامل
+          # فرض العزل الكامل داخل مجلد المشروع
           export BUILDOZER_HOME="${GITHUB_WORKSPACE}/.buildozer"
           export BUILDOZER_BIN="${GITHUB_WORKSPACE}/bin"
           export P4A_HOME="${GITHUB_WORKSPACE}/.buildozer/android/platform/python-for-android"
           
-          # تفعيل وضع عدم التفاعل الصارم لمنع انهيار الـ TTY
+          # حظر التداخل وتعطيل موجهات الـ TTY التفاعلية
           export NONINTERACTIVE=1
           export STTY_CLEAN=1
+          export ANDROID_HOME=""
+          export ANDROID_SDK_ROOT=""
           
-          # تشغيل أمر البناء النهائي مع حظر أي تداخل للصلاحيات
+          # قبول التراخيص بشكل مسبق ومستقل داخل البيئة المعزولة
+          yes | buildozer android licenses || true
+          
+          # إطلاق التجميع القطعي والنهائي لملف الـ APK
           buildozer android debug
           
       - name: Upload Finished APK Artifact
