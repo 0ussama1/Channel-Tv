@@ -1,18 +1,14 @@
-name: Build Android APK via Docker
+name: Build Android APK
 on: [push, workflow_dispatch]
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    # استخدام حاوية Docker مجهزة ومستقرة لحل مشاكل المترجم تماماً
-    container:
-      image: docker://bakinganytime/buildozer:latest
-    
     steps:
       - name: Checkout Source Code
         uses: actions/checkout@v4
 
-      - name: Generate Fresh Specification
+      - name: Generate Stable Buildozer Specification
         run: |
           rm -f buildozer.spec
           cat << 'SPEC' > buildozer.spec
@@ -24,7 +20,7 @@ jobs:
           source.include_exts = py,png,jpg,kv,atlas,txt,m3u,cfg
           version = 1.0.0
           
-          # المتطلبات الافتراضية الآمنة داخل الحاوية
+          # المتطلبات القياسية النظيفة
           requirements = python3,kivy==2.3.0,kivymd==1.2.0,plyer
           
           orientation = portrait
@@ -32,7 +28,10 @@ jobs:
           android.api = 33
           android.minapi = 24
           android.build_tools_version = 33.0.1
+          
+          # معمارية الـ 64 بت المستقرة والتي تتخطى كراش المترجم
           android.archs = arm64-v8a
+          
           android.private_storage = True
           android.accept_sdk_license = True
           android.permissions = READ_EXTERNAL_STORAGE,WRITE_EXTERNAL_STORAGE
@@ -42,10 +41,12 @@ jobs:
           warn_on_root = 1
           SPEC
 
-      - name: Build Android APK inside Container
-        run: |
-          # البناء مباشرة مستفيداً من أدوات الحاوية المعزولة
-          buildozer android debug
+      - name: Build APK using Official Buildozer Action
+        # استخدام الـ Action الرسمي المعزول والمجهز بجميع المترجمات تلقائياً
+        uses: Artemis-chan/buildozer-action@v1
+        with:
+          command: buildozer android debug
+          repository_txt: ""
 
       - name: Upload Finished APK Artifact
         uses: actions/upload-artifact@v4
