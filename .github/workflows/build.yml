@@ -5,61 +5,45 @@ jobs:
   build:
     runs-on: ubuntu-22.04
     steps:
-      - name: Checkout Source Code
+      - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Setup Clean Java 17 (Fixes javac version crash)
+      - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Setup Python 3.11
+      - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      - name: Install System Dependencies
+      - name: Install Buildozer and Dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y git zip unzip python3-pip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev libsqlite3-dev lld
-          python -m pip install --upgrade pip
+          pip install --upgrade pip
           pip install "cython<3.0.0" buildozer
-
-      - name: Generate Buildozer Spec
+          
+      - name: Manual Android SDK/NDK Setup
         run: |
-          cat << 'SPEC' > buildozer.spec
-          [app]
-          title = Sat Channel Editor Pro
-          package.name = satchannelpro
-          package.domain = org.oussama.sat
-          source.dir = .
-          source.include_exts = py,png,jpg,kv,atlas,txt,m3u,cfg
-          version = 1.0.1
-          
-          requirements = python3==3.11.9,kivy==2.3.0,kivymd==1.2.0,plyer,pillow
-          
-          orientation = portrait
-          fullscreen = 0
-          
-          android.api = 33
-          android.minapi = 24
-          android.archs = arm64-v8a
-          android.private_storage = True
-          android.accept_sdk_license = True
-          android.permissions = READ_EXTERNAL_STORAGE,WRITE_EXTERNAL_STORAGE,INTERNET
-          
-          [buildozer]
-          log_level = 2
-          warn_on_root = 1
-          SPEC
+          # تجاوز الفحص التلقائي وتهيئة البيئة يدوياً
+          mkdir -p ~/.buildozer/android/platform
+          export ANDROID_HOME=$HOME/android-sdk
+          export NDK_HOME=$HOME/android-ndk
+          echo "SDK_ROOT=$ANDROID_HOME" >> $GITHUB_ENV
+          echo "NDK_ROOT=$NDK_HOME" >> $GITHUB_ENV
 
       - name: Build APK
         run: |
-          export NONINTERACTIVE=1
-          yes | buildozer android debug
+          # استخدام وضع التجميع المباشر وتخطي أي تحديث للمستودعات
+          buildozer android debug
+        env:
+          ANDROID_HOME: /home/runner/android-sdk
+          NDK_HOME: /home/runner/android-ndk
 
-      - name: Upload Finished APK
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: SatChannelEditor-Pro-APK
