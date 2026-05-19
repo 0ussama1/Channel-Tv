@@ -16,17 +16,50 @@ jobs:
       - name: Install System Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y git zip unzip openjdk-17-jdk python3-pip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev libsqlite3-dev lld shared-mime-info libltdl-dev expect libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev curl
-
-      - name: Install Official Buildozer & Cython
-        run: |
+          sudo apt-get install -y git zip unzip openjdk-17-jdk python3-pip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev libsqlite3-dev lld
           python -m pip install --upgrade pip
-          pip install "cython<3.0.0"
-          pip install --upgrade buildozer
+          pip install "cython<3.0.0" buildozer==1.5.0
 
-      - name: Build APK (Native Execution)
+      - name: Link GitHub Pre-installed Android SDK/NDK
         run: |
-          yes | buildozer android debug
+          # العثور على مسار NDK المثبت مسبقاً في سيرفرات قيت هاب واستخدامه
+          export NDK_DIR=$(ls -d /usr/local/lib/android/sdk/ndk/* | head -1)
+          echo "Found pre-installed NDK at: $NDK_DIR"
+          
+          cat << SPEC > buildozer.spec
+          [app]
+          title = Sat Channel Editor Pro
+          package.name = satchannelpro
+          package.domain = org.oussama.sat
+          source.dir = .
+          source.include_exts = py,png,jpg,kv,atlas,txt,m3u,cfg
+          version = 1.0.1
+          
+          requirements = python3==3.11.9,kivy==2.3.0,kivymd==1.2.0,plyer,pillow
+          
+          orientation = portrait
+          fullscreen = 0
+          
+          # توجيه المترجم لاستخدام الملفات الجاهزة وتخطي التحميل
+          android.sdk_path = /usr/local/lib/android/sdk
+          android.ndk_path = ${NDK_DIR}
+          
+          android.api = 33
+          android.minapi = 24
+          android.archs = arm64-v8a
+          android.private_storage = True
+          android.accept_sdk_license = True
+          android.permissions = READ_EXTERNAL_STORAGE,WRITE_EXTERNAL_STORAGE,INTERNET
+          
+          [buildozer]
+          log_level = 2
+          warn_on_root = 1
+          SPEC
+
+      - name: Build APK using Pre-warmed Environment
+        run: |
+          export NONINTERACTIVE=1
+          buildozer android debug
 
       - name: Upload Finished APK Artifact
         uses: actions/upload-artifact@v4
