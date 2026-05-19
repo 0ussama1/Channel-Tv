@@ -8,15 +8,15 @@ jobs:
       - name: Checkout Source Code
         uses: actions/checkout@v4
 
-      - name: Setup Unified Python Environment
+      - name: Setup Dynamic Python 3.11 Environment
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      - name: Install System Dependencies
+      - name: Install Pure System Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libsqlite3-dev lld openjdk-17-jdk shared-mime-info autoconf automake libtool pkg-config zlib1g-dev libffi-dev libssl-dev libltdl-dev expect libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev curl
+          sudo apt-get install -y git zip unzip openjdk-17-jdk python3-pip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev libsqlite3-dev lld shared-mime-info libltdl-dev expect libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev curl
           python -m pip install --upgrade pip
           pip install "cython<3.0.0"
           pip install buildozer==1.5.0
@@ -33,12 +33,13 @@ jobs:
           source.include_exts = py,png,jpg,kv,atlas,txt,m3u,cfg
           version = 1.0.1
           
+          # استخدام التوليفة الحديثة المستقرة جينياً مع السيرفر
           requirements = python3==3.11.9,kivy==2.3.0,kivymd==1.2.0,plyer,pillow
           
           orientation = portrait
           fullscreen = 0
           
-          # فرض تحديد يدوي صارم لتخطي قيم السيرفر الجبرية
+          # حسم تجاوز متغيرات السيرفر الجبرية
           android.sdk_path = ${{ github.workspace }}/.buildozer/android/platform/android-sdk
           android.ndk_path = ${{ github.workspace }}/.buildozer/android/platform/android-ndk-r25b
           
@@ -48,27 +49,25 @@ jobs:
           android.archs = arm64-v8a
           android.private_storage = True
           android.accept_sdk_license = True
-          android.permissions = READ_EXTERNAL_STORAGE,WRITE_EXTERNAL_STORAGE
+          android.permissions = READ_EXTERNAL_STORAGE,WRITE_EXTERNAL_STORAGE,INTERNET
           
           [buildozer]
           log_level = 2
           warn_on_root = 1
           SPEC
 
-      - name: Free Space and Build Execution
+      - name: Clean Local Environment & Build
         run: |
-          # تنظيف أي مخلفات قديمة لبدء بناء محلي نقي
           rm -rf ~/.buildozer
           rm -rf .buildozer
           mkdir -p .buildozer/android/platform
           
-          # حقن المتغيرات الاحتياطية لتأكيد العزل والتحجيم الكامل للمترجم
           export BUILDOZER_HOME="${{ github.workspace }}/.buildozer"
           export BUILDOZER_BIN="${{ github.workspace }}/bin"
+          export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
           export NONINTERACTIVE=1
           export STTY_CLEAN=1
           
-          # قبول التراخيص داخلياً وإطلاق التجميع النهائي
           yes | buildozer android licenses || true
           buildozer android debug
 
