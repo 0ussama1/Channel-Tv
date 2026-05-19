@@ -21,21 +21,7 @@ jobs:
           pip install "cython<3.0.0"
           pip install buildozer==1.5.0
 
-      - name: Overwrite System Android Variables
-        run: |
-          # إنشاء وتأمين مجلد محلي معزول تماماً للـ Toolchain
-          mkdir -p ${{ github.workspace }}/.buildozer_global/android/platform
-          
-          # حقن متغيرات البيئة إجبارياً في النظام السحابي لتخطي القيم الافتراضية
-          echo "BUILDOZER_HOME=${{ github.workspace }}/.buildozer_global" >> $GITHUB_ENV
-          echo "ANDROID_HOME=${{ github.workspace }}/.buildozer_global/android/platform/android-sdk" >> $GITHUB_ENV
-          echo "ANDROID_SDK_ROOT=${{ github.workspace }}/.buildozer_global/android/platform/android-sdk" >> $GITHUB_ENV
-          echo "ANDROID_NDK_HOME=${{ github.workspace }}/.buildozer_global/android/platform/android-ndk-r25b" >> $GITHUB_ENV
-          echo "P4A_HOME=${{ github.workspace }}/.buildozer_global/android/platform/python-for-android" >> $GITHUB_ENV
-          echo "NONINTERACTIVE=1" >> $GITHUB_ENV
-          echo "STTY_CLEAN=1" >> $GITHUB_ENV
-
-      - name: Generate Synced Buildozer Specification
+      - name: Hardcode Local Paths into Buildozer Spec
         run: |
           rm -f buildozer.spec
           cat << 'SPEC' > buildozer.spec
@@ -51,6 +37,11 @@ jobs:
           
           orientation = portrait
           fullscreen = 0
+          
+          # فرض تحديد يدوي صارم لتخطي قيم السيرفر الجبرية
+          android.sdk_path = ${{ github.workspace }}/.buildozer/android/platform/android-sdk
+          android.ndk_path = ${{ github.workspace }}/.buildozer/android/platform/android-ndk-r25b
+          
           android.api = 33
           android.minapi = 24
           android.build_tools_version = 33.0.1
@@ -64,12 +55,21 @@ jobs:
           warn_on_root = 1
           SPEC
 
-      - name: Forced Local Context Production Build
+      - name: Free Space and Build Execution
         run: |
-          # قبول التراخيص بشكل مسبق داخل المسار المحلي الجديد للـ SDK
-          yes | buildozer android licenses || true
+          # تنظيف أي مخلفات قديمة لبدء بناء محلي نقي
+          rm -rf ~/.buildozer
+          rm -rf .buildozer
+          mkdir -p .buildozer/android/platform
           
-          # إطلاق التجميع الآمن والمعزول كلياً
+          # حقن المتغيرات الاحتياطية لتأكيد العزل والتحجيم الكامل للمترجم
+          export BUILDOZER_HOME="${{ github.workspace }}/.buildozer"
+          export BUILDOZER_BIN="${{ github.workspace }}/bin"
+          export NONINTERACTIVE=1
+          export STTY_CLEAN=1
+          
+          # قبول التراخيص داخلياً وإطلاق التجميع النهائي
+          yes | buildozer android licenses || true
           buildozer android debug
 
       - name: Upload Finished APK Artifact
