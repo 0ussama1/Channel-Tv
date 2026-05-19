@@ -8,6 +8,14 @@ jobs:
       - name: Checkout Source Code
         uses: actions/checkout@v4
 
+      - name: Free Disk Space for Safe Heavy Compilation
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /opt/ghc
+          sudo rm -rf "/usr/local/share/boost"
+          sudo apt-get clean
+
       - name: Setup Dynamic Python 3.11 Environment
         uses: actions/setup-python@v5
         with:
@@ -33,13 +41,11 @@ jobs:
           source.include_exts = py,png,jpg,kv,atlas,txt,m3u,cfg
           version = 1.0.1
           
-          # استخدام التوليفة الحديثة المستقرة جينياً مع السيرفر
           requirements = python3==3.11.9,kivy==2.3.0,kivymd==1.2.0,plyer,pillow
           
           orientation = portrait
           fullscreen = 0
           
-          # حسم تجاوز متغيرات السيرفر الجبرية
           android.sdk_path = ${{ github.workspace }}/.buildozer/android/platform/android-sdk
           android.ndk_path = ${{ github.workspace }}/.buildozer/android/platform/android-ndk-r25b
           
@@ -56,21 +62,29 @@ jobs:
           warn_on_root = 1
           SPEC
 
-      - name: Clean Local Environment & Build
+      - name: Native Forced CI Environment Emulation Build
         run: |
           rm -rf ~/.buildozer
           rm -rf .buildozer
-          mkdir -p .buildozer/android/platform
+          mkdir -p .buildozer/android/platform/android-sdk/licenses
           
+          # حقن الهوية الرقمية الشاملة لتراخيص أندرويد لقتل أي فحص صامت
+          echo -e "\n8933bad161ad4178b1185d1a37fbf41ea5269c55\nd56f17341aa5e035785661bcb3d96d8c34782287\n24333f1a63b68bfa3a3725a0787ec0010db18e11\n84831b9409646a918e30573bab4c9c91346d8abd\n35dbf975087addb003b03833e73f4b0366ec3091\ne9ac305950a34348f1a5111e2546dd8d4b26b873" > .buildozer/android/platform/android-sdk/licenses/android-sdk-license
+          echo -e "\n84831b9409646a918e30573bab4c9c91346d8abd" > .buildozer/android/platform/android-sdk/licenses/android-sdk-preview-license
+          
+          # كسر الحصار البيئي وإجبار الأداة على العمل كأنها داخل حاسوب محلي مفتوح
           export BUILDOZER_HOME="${{ github.workspace }}/.buildozer"
           export BUILDOZER_BIN="${{ github.workspace }}/bin"
           export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
-          export NONINTERACTIVE=1
-          export STTY_CLEAN=1
           
-          yes | buildozer android licenses || true
-          buildozer android debug
-
+          # متغيرات التصفية والالتفاف لمنع الانهيار الصامت
+          export CI=false
+          export GITHUB_ACTIONS=false
+          export NONINTERACTIVE=0
+          
+          # استدعاء التجميع المباشر عبر محاكي التفاعل لضمان تخطي عقبة الـ TTY
+          yes | buildozer android debug || buildozer android debug
+          
       - name: Upload Finished APK Artifact
         uses: actions/upload-artifact@v4
         with:
